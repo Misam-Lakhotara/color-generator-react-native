@@ -1,71 +1,50 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const Index = () => {
-  const [color, setColor] = useState("gray");
-  const [activeColor, setActiveColor] = useState(null);
+const Color = () => {
+  const [colors, setColors] = useState([]);
+  const [selectedColor, setSelectedColor] = useState("gray");
+  const [error, setError] = useState(null);
 
-  const colors = ["red", "green", "blue"];
-
-  const setRandomColor = () => {
-    const index = Math.floor(Math.random() * colors.length);
-    setColor(colors[index]);
-    setActiveColor(colors[index]);
+  const fetchColors = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/api/colors");
+      const data = await response.data;
+      setColors(data.colors);
+    } catch (error) {
+      setError("Error fetching colors");
+      console.error(error);
+    }
   };
 
-  const handlePress = (color) => {
-    setColor(color);
-    setActiveColor(color);
-  };
+  useEffect(() => {
+    fetchColors();
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={{ fontSize: 20, marginBottom: 10 }}>Color</Text>
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          activeColor === "red" && { backgroundColor: "red" },
-        ]}
-        onPress={() => handlePress("red")}
-      >
-        <Text>Red</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          activeColor === "green" && { backgroundColor: "green" },
-        ]}
-        onPress={() => handlePress("green")}
-      >
-        <Text>Green</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          activeColor === "blue" && { backgroundColor: "blue" },
-        ]}
-        onPress={() => handlePress("blue")}
-      >
-        <Text>Blue</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          activeColor === "random" && { backgroundColor: color },
-        ]}
-        onPress={() => {
-          setRandomColor();
-          setActiveColor("random");
-        }}
-      >
-        <Text>Random Color</Text>
-      </TouchableOpacity>
-
-      <View style={[styles.box, { backgroundColor: color }]}></View>
+      <FlatList
+        data={colors}
+        keyExtractor={(item) => item.label}
+        renderItem={({ item }) => (
+          <View style={{ margin: 5 }}>
+            <TouchableOpacity
+              style={[styles.colorButton, { backgroundColor: item.value }]}
+              onPress={() => setSelectedColor(item.value)}
+            >
+              <Text style={styles.buttonText}>{item.label}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+      <View style={[styles.box, { backgroundColor: selectedColor }]}></View>
     </View>
   );
 };
@@ -73,24 +52,25 @@ const Index = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
     justifyContent: "center",
+  },
+  colorButton: {
+    padding: 10,
+    borderRadius: 5,
     alignItems: "center",
   },
-
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   box: {
     width: 200,
     height: 200,
-    marginTop: 20,
-  },
-
-  button: {
-    padding: 10,
-    margin: 10,
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#ddd",
+    backgroundColor: "gray",
+    marginBottom: 50,
   },
 });
 
-export default Index;
+export default Color;
